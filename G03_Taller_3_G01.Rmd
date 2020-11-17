@@ -1,0 +1,533 @@
+---
+title: "Coronavirus Statistics In Colombia"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: default
+    orientation: rows
+    vertical_layout: fill
+    social: menu
+    source_code: embed
+    # DESARROLLADORES:
+    # Gian Marco Astori P. 2020114003
+    # Juan Diaz Guerrero   2020114035
+    # Johan s. Hawkins B.  2020114034
+    
+    # Grupo: 03
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard) # visualizaciones de datos relacionados como un tablero.
+library(knitr) #Conversion a archivo plano
+library(plyr) #Guardar tablas de datos.
+library(ggplot2) #Generar las graficas.
+library(scales) #Asignación datos a la estética.
+library(readxl) #Para leer el excel
+library(plotly) #Crea gráficos interactivos con calidad de publicación.
+library(modeest) #Dato estadisco (MODA)
+library(carData)
+```
+
+```{r}
+#Se activa las varibles del archivo excel
+Dat_Covid <- read.csv2("covid19_data_INS_Col.csv")
+attach(Dat_Covid)
+#-------------------------------------------------------------------------------------------------
+#DATOS BASICOS
+#Colocamos los de (confirmados, recuperados, fallecidos, infectados) en varables para utilizarlo despues en las tarjetas 
+confirmados <- length(Dat_Covid$Caso)
+recuperados <-length(Dat_Covid$Ubicacion[Ubicacion=="Recuperado"])
+fallecidos <- length(Dat_Covid$Ubicacion[Ubicacion=="Fallecido"])
+infectados <- confirmados - (recuperados + fallecidos)
+#-------------------------------------------------------------------------------------------------
+#fecha
+Fechas <- (as.Date(Dat_Covid$Fecha_muerte, format = "%d/%m/%Y"))
+Mes <- data.frame(table(format(Fechas, "%m")))
+#-------------------------------------------------------------------------------------------------
+#colores
+azul_claro <- "#0abde3"
+azul_oscuro <- "#2e86de"
+rojo <-"#ff6b6b"
+amarillo <- "#feca57"
+Azul_menta <- "#59BFB3"
+rosa <-"#ff9ff3"
+verde_claro <- "#1dd1a1"
+Morado <- "#5f27cd"
+Azul_gris <- "#82B5C2"
+Morado_claro <- "#be92eb"
+
+#-------------------------------------------------------------------------------------------------
+#TOTALES DE HOMBRES Y MUJERES
+#sumamos la cantidad total de hombre (M,m) y lo guardamos en una misma variable (totalHombres)..asi mismo con las mujere
+M1 <- length(Dat_Covid$Sexo[Sexo=="M"])
+M2 <- length(Dat_Covid$Sexo[Sexo=="m"])
+F1 <- length(Dat_Covid$Sexo[Sexo=="F"])
+F2 <- length(Dat_Covid$Sexo[Sexo=="f"])
+totalHombres <- M1+M2
+totalMujeres <- F1+F2
+#-------------------------------------------------------------------------------------------------
+# Fechas
+Fechas_not <- (as.Date(Dat_Covid$Fecha.Not, format = "%d/%m/%Y"))
+Mes_not <- data.frame(table(format(Fechas_not, "%m")))
+
+#-------------------------------------------------------------------------------------------------
+#DEPARTAMENTO CON MAYOR CONTAGIO
+#buscamos cual es el departamento mas afectado (depart) y la cantidad de contagio en ese departamento (casoDepart).. unimos esos datos en una misma variables (Dat_Depart) para mostrarlo en la tarjeta
+depart <- mfv(Dat_Covid$nombre_depa)
+casoDepart <- length(Dat_Covid$nombre_depa[nombre_depa==depart])
+Dat_Depart <- paste(casoDepart, "cases in", depart)
+#Santa Marta
+Santa_Marta <- length(Dat_Covid$nombre_depa[nombre_depa=="Santa Marta D.T. y C."])
+
+#-------------------------------------------------------------------------------------------------
+#PER_ETN_2
+#se declara una variable que guarda una funcion para poder utilizarlo mas facilmente en la tarjeta
+x <- c("Indígena", "Negro", "Otro", "Rom", "")
+var_per_ent_2 <- function(etnia2){length(Dat_Covid$per_etn_2[per_etn_2==etnia2])}
+
+#-------------------------------------------------------------------------------------------------
+#PAIS_VIAJO_1_NOM
+#se organiza los paises por continentes en vectores y se le asigna a una variable
+C_americano <- c("ARGENTINA", "BRASIL", "CANADÁ", "CHILE", "COSTA RICA", "CUBA", "ECUADOR", "ESTADOS UNIDOS", "ESTADOS UNIDOS DE AMÉRICA", "GUATEMALA", "HONDURAS", "JAMAICA", "MEXICO", "MÉXICO", "NICARAGUA", "PANAMA", "PANAMÁ", "PERU", "PERÚ", "PUERTO RICO", "REPÚBLICA DOMINICANA", "URUGUAY", "VENEZUELA"); Tamaño_America <- length(C_americano)
+
+C_europeo <- c("ALEMANIA", "ANTILLAS NEERLANDESAS", "ARUBA", "BELGICA", "BOSNIA HERZEGOVINA", "CROACIA", "CURAZAO", "ESPAÑA", "FRANCIA", "GRECIA", "IRLANDA", "ITALIA", "PORTUGAL", "REINO UNIDO DE GRAN BRETAÑA E IRLANDA", "SUECIA", "SUIZA"); Tamaño_Europa <- length(C_europeo)
+
+C_africa <- c("EGIPTO", "KENYA", "MARRUECOS"); Tamaño_Africa <- length(C_africa)
+
+C_asia <- c("ARABIA SAUDÍ", "ARABIA SAUDITA", "BANGLADESH", "EMIRATOS ARABES UNIDOS", "ISRAEL", "REPÚBLICA ÁRABE SIRIA", "TURQUÍA"); Tamaño_Asia <- length(C_asia)
+
+C_oceania <- c("AUSTRALIA"); Tamaño_Oceania <- length(C_oceania)
+
+C_UNREGISTERED <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==""])
+
+
+
+#Calculamos cuantos viajante hay en cada continente utilizando ciclos (while), y guardando numero en la variable (total+nombredelcontinente)
+#conteo C_americano
+
+i1 <-1
+totalAmerica <- 0
+l1 <- 1
+while(i1 <= Tamaño_America ){
+  longitudAmerica <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==C_americano[c(l1)]])
+  totalAmerica <- longitudAmerica + totalAmerica 
+  l1<- l1 + 1
+  i1 <- i1 + 1
+}
+
+#conteo C_europeo
+i2 <- 1
+totalEuropa <- 0
+l2 <- 1
+while(i2 <= Tamaño_Europa ){
+  longitudEuropa <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==C_europeo[c(l2)]])
+  totalEuropa <- longitudEuropa + totalEuropa
+  l2 <- l2 + 1
+  i2 <- i2 + 1
+}
+
+#conteo C_africa
+i3 <- 1
+totalAfrica <- 0
+l3 <- 1
+while(i3 <= Tamaño_Africa ){
+  longitudAfrica <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==C_africa[c(l3)]])
+  totalAfrica <- longitudAfrica + totalAfrica
+  l3 <- l3 + 1
+  i3 <- i3 + 1
+}
+
+#conteo C_asia
+i4 <- 1
+totalAsia <- 0
+l4 <- 1
+while(i4 <= Tamaño_Asia ){
+  longitudAsia <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==C_asia[c(l4)]])
+  totalAsia <- longitudAsia + totalAsia
+  l4 <- l4 + 1
+  i4 <- i4 + 1
+}
+
+#conteo C_oceania
+i5 <- 1
+totalOceania <- 0
+l5 <- 1
+while(i5 <= Tamaño_Oceania ){
+  longitudOceania <- length(Dat_Covid$Pais_viajo_1_nom[Pais_viajo_1_nom==C_oceania[c(l5)]])
+  totalOceania <- longitudOceania + totalOceania
+  l5 <- l5 + 1
+  i5 <- i5 + 1
+}
+
+#-------------------------------------------------------------------------------------------------
+# Estado
+Leve_1 <- length(Dat_Covid$Estado[Estado=="Leve"])
+Moderado_2 <- length(Dat_Covid$Estado[Estado=="Moderado"])
+Grave_3 <- length(Dat_Covid$Estado[Estado=="Grave"])
+Asintomático_4 <- length(Dat_Covid$Estado[Estado=="Asintomático"])
+Fallecido_5 <- length(Dat_Covid$Estado[Estado=="Fallecido"])
+N_A_6 <- length(Dat_Covid$Estado[Estado=="N/A"])
+```
+
+
+Home
+===================================================================
+
+Row
+-------------------------------------------------------------------
+
+### CORONAVIRUS INFECTIONS COLOMBIA
+```{r}
+#Variable 1
+valueBox(
+  confirmados,
+  color = azul_oscuro,
+  icon = "fa-globe-americas",
+)
+```
+
+### TOTAL DEATHS
+```{r}
+valueBox(
+  fallecidos,
+  color = rojo,
+  icon = "fa-dizzy"
+)
+```
+
+### CURRENTLY INFECTED
+```{r}
+valueBox(
+  infectados,
+  color = amarillo,
+  icon = "fa-plus-square"
+)
+```
+
+### TOTAL RECOVERED
+```{r}
+valueBox(
+  recuperados,
+  color = verde_claro,
+ 	icon = "fa-child"
+)
+```
+
+Row
+----------------------------------------------------------------------------------
+   
+### CONFIRMED MEN 
+```{r}
+#Variable 2 parte 1
+valueBox(
+  totalHombres,
+  color = azul_claro,
+ 	icon = "fa-male"
+)
+```
+
+### CONFIRMED WOMEN
+```{r}
+#Variable 2 parte 2
+valueBox(
+  totalMujeres,
+  color = rosa,
+  icon = "fa-female"
+)
+```
+
+### MOST AFFECTED DEPARTMENT
+```{r}
+valueBox(
+  Dat_Depart,
+  color = Morado,
+  icon = "fa-map-marker-alt",
+)
+```
+
+### CASES IN SANTA MARTA D.T.C.H
+```{r}
+valueBox(
+  Santa_Marta,
+  color = Morado_claro,
+  icon = "fa-map-marked-alt",
+)
+```
+
+Row {.tabset}
+--------------------------------------------------
+
+### INDIGENOUS GROUPS
+```{r}
+valueBox(
+  paste(var_per_ent_2(x[c(1)]),"Indigenous people were affected"),
+  color = Azul_menta,
+  icon = "fa-user-friends",
+)
+```
+
+### AFROAMERICAN GROUPS
+```{r}
+valueBox(
+  paste(var_per_ent_2(x[c(2)]),"Afroamerican people were affected"),
+  color = Azul_menta,
+  icon = "fa-user-friends",
+)
+```
+
+### OTHER GROUPS
+```{r}
+valueBox(
+  paste(var_per_ent_2(x[c(3)]),"Other people were affected"),
+  color = Azul_menta,
+  icon = "fa-user-friends",
+)
+```
+
+### ROM GROUPS
+```{r}
+valueBox(
+  paste(var_per_ent_2(x[c(4)]),"Rom people were affected"),
+  color = Azul_menta,
+  icon = "fa-user-friends",
+)
+```
+
+### UNREGISTERED GROUPS
+```{r}
+valueBox(
+  paste("",var_per_ent_2(x[c(5)]),"Unregistered people were affected"),
+  color = Azul_menta,
+  icon = "fa-user-friends",
+)
+```
+
+Row {.tabset} 
+--------------------------------------------------
+
+### CASES - AMERICAN C.
+```{r}
+valueBox(
+  paste(totalAmerica,"cases in America"),
+  color = Azul_gris,
+  icon = "fa-globe-americas"
+)
+```
+
+### CASES - EUROPEAN C.
+```{r}
+valueBox(
+  paste(totalEuropa,"cases in Europe"),
+  color = Azul_gris,
+  icon = "fa-globe-africa"
+)
+```
+
+### CASES - AFRICAN C.
+```{r}
+valueBox(
+  paste(totalAfrica,"cases in Africa"),
+  color = Azul_gris,
+  icon = "fa-globe-africa"
+)
+```
+
+### CASES - ASIAN C.
+```{r}
+valueBox(
+  paste(longitudAsia,"cases in Asia"),
+  color = Azul_gris,
+  icon = "fa-globe-asia"
+)
+```
+
+### CASES - OCEANIC C.
+```{r}
+valueBox(
+  paste(totalOceania,"cases in Oceania"),
+  color = Azul_gris,
+  icon = "fa-globe-asia"
+)
+```
+
+### UNREGISTERED
+```{r}
+valueBox(
+  paste(C_UNREGISTERED,"cases from unregistered countries"),
+  color = Azul_gris,
+  icon = "fa-globe"
+)
+```
+
+Graphics
+===================================================================
+
+Row
+--------------------------------------------------------------------
+
+### F1 VARIATIONS OF COVID-19 CASES IN COLOMBIA
+```{r}
+plot_ly(
+  x = c("Deceased", "Infected", "Recovered"),
+  y = c(fallecidos, infectados, recuperados),
+  color = ~c("Deceased", "Infected", "Recovered"),
+  colors = c(rojo, amarillo, verde_claro),
+  name = c("Deceased", "Infected", "Recovered"),
+  type = "bar",
+  height = 250, width = 320
+)
+```
+
+### F2 COVID-19 CASES - FEMALE & MALE
+```{r}
+labels = c("MEN", "WOMEN")
+values = c(totalHombres, totalMujeres)
+
+plot_ly(
+  type = "pie",
+  labels = labels,
+  values = values, 
+  textinfo = "label+percent",
+  insidetextorientation ="radial",
+  height = 250, width = 320,
+  marker = list(colors = c(azul_oscuro, rosa))
+)
+```
+
+### F3 NUMBER OF DECEASED PER MONTH
+```{r}
+plot_ly(
+  x = c("March", "April", "May", "June", "July", "August", "September"),
+  y = c(29, 340, 898, 3138, 8124, 9459, 2710),
+  color = ~c("March", "April", "May", "June", "July", "August", "September"),
+  colors = c(rainbow(7)),
+  name = c("March", "April", "May", "June", "July", "August", "September"),
+  type = "bar",
+  height = 250, width = 320
+)
+```
+
+### F4 NOTIFIED DISEASED PER MONTH
+```{r}
+Months_of_notification<-Mes_not
+Notified_people<-Mes_not$Freq
+Specific_month<-Mes_not$Var1
+fig<-plot_ly(
+  data = Months_of_notification,
+  Title = "Notified diseased per month",
+  name = "Diseased",
+  x = ~Specific_month,
+  y = ~Notified_people,
+  type = 'scatter',
+  mode = 'lines',
+  height = 250, width = 320
+)
+
+fig<- fig %>% layout(
+    xaxis = list(title = "Specific months"),
+    yaxis= list(title= "Notified diseased"),
+    margin = list(l = 100)
+)
+fig
+```
+
+Row
+--------------------------------------------------------------------
+
+### F5 DISEASED INDIVIDUALS FROM DIFFERENT ETHNIC GROUPS
+```{r}
+labels = c("INDIGENOUS", "AFROAMERICAN", "OTHER", "ROM", "UNREGISTERED")
+values = c(var_per_ent_2(x[c(1)]), var_per_ent_2(x[c(2)]), var_per_ent_2(x[c(3)]), var_per_ent_2(x[c(4)]), var_per_ent_2(x[c(5)]))
+
+fig_2 <- plot_ly(
+        type = "pie",
+        labels = labels,
+        values = values, 
+        textinfo = "label+percent",
+        insidetextorientation ="radial",
+        height = 250, width = 320,
+        textposition = 'inside',
+        textinfo = 'label'
+)
+
+fig_2
+```
+
+### F6 AMOUNT OF DISEASED PER AGES
+```{r}
+Ages <- data.frame(table(Dat_Covid$Edad))
+Amount <- Ages$Freq
+Specific_Ages <- Ages$Var1
+
+fig_3 <- plot_ly(
+  data = Ages,
+  x = ~Specific_Ages,
+  y = ~Amount,
+  type = 'scatter',
+  mode = 'lines',
+  height = 250, width = 320,
+  color = I('red')
+)
+
+fig_3 <- fig_3 %>% layout(
+    xaxis = list(title = "Specific ages"),
+    yaxis= list(title= "Amount of diseased"),
+    margin = list(l = 100)
+)
+fig_3
+```
+
+### F7 CASES IN REGISTERED CONTINENTS
+```{r}
+plot_ly(
+  x = c("AMERICAN C.", "EUROPEAN C.", "AFRICAN C.", "ASIAN C.", "OCEANIC C."),
+  y = c(totalAmerica, totalEuropa, totalAfrica, longitudAsia, totalOceania),
+  color = ~c("AMERICAN C.", "EUROPEAN C.", "AFRICAN C.", "ASIAN C.", "OCEANIC C."),
+  colors = c(rainbow(5)),
+  name = c("AMERICAN C.", "EUROPEAN C.", "AFRICAN C.", "ASIAN C.", "OCEANIC C."),
+  type = "bar",
+  height = 250, width = 320
+)
+```
+
+### F8 VARIETY OF CONDITIONS
+```{r}
+plot_ly(
+  x = c("Light","Moderate","Severe","Asymptomatic","Deceased","N/A"),
+  y = c(Leve_1, Moderado_2, Grave_3, Asintomático_4, Fallecido_5, N_A_6),
+  color = ~c("Light","Moderate","Severe","Asymptomatic","Deceased","N/A"),
+  colors = c(rainbow(6)),
+  name = c("Light","Moderate","Severe","Asymptomatic","Deceased","N/A"),
+  type = "bar",
+  height = 250, width = 320
+)
+```
+
+Conclusions
+===================================================================
+
+Row
+-------------------------------------------------------------------
+
+### Conclusions gathered from graphs and info cards 
+
+
+- We can conclude that it's not a mortal disease, as only  `r round((fallecidos/confirmados*100),2)`% Of the infected individuals in Colombia have died.
+ 
+- The point with the highest amount of diseased in Colombia is `r depart` with a total of  `r casoDepart` cases.
+ 
+- The virus affects men the same way (`r round((totalHombres/confirmados*100),2)`%) as women (`r round((totalMujeres/confirmados*100),2)`%)
+ 
+- In graph number 4, data has an ascending pattern that increases exponentially, reaching its peak in month 07 (septiembre) and 08 (agosto).
+
+- To work with dates, we use as.date, format = %d/%m/%y.
+
+- We have to use data.frame to put dates in graphs or cards.
+
+- The population with the highest index of diseased individuals is the one that goes from 23 to 40 year olds.
+
+- The continent with the highest amount of imported cases is the american one.
+
+- The most affected ethnic group is the afroamerican one.
+
+- The rate of recovered individuals (`r round((recuperados/confirmados*100),2)`%), is higher than the current rate of active infected individuals (as of the months reported in the files) (`r round((infectados/confirmados*100),2)`%) and the rate of deceased individuals (`r round((fallecidos/confirmados*100),2)`%).
+
