@@ -9,7 +9,7 @@
 Archivo  | Descripcion
 ------------- | -------------
 covid19_data_INS_Col  | Contiene todos los datos a utilizar
-Dashboard  | Contiene la logia para visualizar los datos 
+Dashboard  | Contiene la logica para visualizar los datos 
 
 ### paquetes a instalar
 
